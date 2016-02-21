@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	elastigo "github.com/mattbaird/elastigo/lib"
-	"log"
-	"os"
-	"strings"
+	"github.com/nlopes/slack"
+	"regexp"
 	"time"
 )
 
-var esConn *elastigo.Conn
+type MemoPlugin struct {
+	esConn *elastigo.Conn
+	re     *regexp.Regexp
+}
 
 type Memo struct {
 	Date time.Time
@@ -18,46 +19,39 @@ type Memo struct {
 	Tags []string
 }
 
-func main() {
-	esConn = elastigo.NewConn()
-	esConn.Domain = "localhost"
-	esConn.Port = "9200"
-	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "usage: mybot slack-bot-token\n")
-		os.Exit(1)
+func (m *MemoPlugin) Start() {
+	m.re = regexp.MustCompile("^memo (.*)")
+	m.esConn = elastigo.NewConn()
+	m.esConn.Domain = "localhost"
+	m.esConn.Port = "9200"
+}
+
+func (m *MemoPlugin) Handle(msg slack.Msg) {
+	out := m.re.FindStringSubmatch(msg.Text)
+	if len(out) == 0 {
+		return
 	}
+	ch := chanIdToName(msg.Channel)
+	usr := userIdToName(msg.User)
 
-	// start a websocket-based Real Time API session
-	ws, id := slackConnect(os.Args[1])
-	fmt.Println("mybot ready. my name is", id)
+	// "category" == channel, but if it was a PM, just use the username
+	category := usr
+	if ch != "null" {
+		category = ch
+	}
+	fmt.Println("MEMO", ch, usr, out[1])
 
-	for {
-		// read each incoming message
-		m, err := getMessage(ws)
-		if err != nil {
-			log.Fatal(err)
-		}
-		spew.Dump(m)
-		//"2m", "40s", "10min40s"
+	//"2m", "40s", "10min40s"
 
-		if m.Type == "message" {
-			if strings.HasPrefix(m.Text, "memo ") && len(m.Text) > 5 {
-				//fields := strings.Fields(m.Text)
-				go func(m Message) {
-					memo := Memo{
-						time.Now().UTC(),
-						m.Text[5:],
-						[]string{"memo"},
-					}
-					response, _ := esConn.Index("memos", "memo", "", nil, memo)
-					if response.Created {
-						m.Text = "Memo memorized"
-					} else {
-						m.Text = "memo fail :'("
-					}
-					postMessage(ws, m)
-				}(m)
-			}
-		}
+	memo := Memo{
+		time.Now().UTC(),
+		out[1],
+		[]string{category, "author:" + usr},
+	}
+	response, _ := m.esConn.Index("memos", "memo", "", nil, memo)
+	if response.Created {
+		rtm.SendMessage(rtm.NewOutgoingMessage("Memo memorized", msg.Channel))
+	} else {
+		rtm.SendMessage(rtm.NewOutgoingMessage("memo fail :'(", msg.Channel))
 	}
 }

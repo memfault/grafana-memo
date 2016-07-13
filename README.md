@@ -17,7 +17,7 @@ defaults to `25`, so by default it assumes your message is about 25 seconds afte
 
 It can have the following formats:
 
-* `<duration>` like 0 (seconds), 10 (seconds), 30s, 1min20s, 2h, etc. see https://github.com/raintank/raintank-metric/blob/master/dur/durations.go denotes how long ago the event took place
+* `<duration>` like 0 (seconds), 10 (seconds), 30s, 1min20s, 2h, etc. see https://github.com/raintank/dur denotes how long ago the event took place
 * `<RFC3339 spec>` like `2013-06-05T14:10:43Z`
 
 ## msg

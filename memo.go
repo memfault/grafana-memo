@@ -6,7 +6,7 @@ import (
 	"github.com/benbjohnson/clock"
 	elastigo "github.com/mattbaird/elastigo/lib"
 	"github.com/nlopes/slack"
-	"github.com/raintank/raintank-metric/dur"
+	"github.com/raintank/dur"
 	"regexp"
 	"sort"
 	"strings"

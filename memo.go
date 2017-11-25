@@ -35,7 +35,7 @@ func getMemo(ch, usr, msg string, cl clock.Clock) (*Memo, error) {
 	}
 
 	ts := cl.Now().Add(-25 * time.Second)
-	dur, err := dur.ParseUsec(words[0])
+	dur, err := dur.ParseDuration(words[0])
 	if err == nil {
 		ts = cl.Now().Add(-time.Duration(dur) * time.Second)
 		msg = msg[len(words[0]):]

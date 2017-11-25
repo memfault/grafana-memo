@@ -48,7 +48,7 @@ func TestParse(t *testing.T) {
 			&Memo{
 				Date: time.Unix(10*60*60-25, 0).UTC(),
 				Desc: "message",
-				Tags: []string{"author:userName", "chan:chanName"},
+				Tags: []string{"memo", "author:userName", "chan:chanName"},
 			},
 			nil,
 		},
@@ -60,7 +60,7 @@ func TestParse(t *testing.T) {
 			&Memo{
 				Date: time.Unix(10*60*60-25, 0).UTC(),
 				Desc: "some message",
-				Tags: []string{"author:userName", "chan:chanName"},
+				Tags: []string{"memo", "author:userName", "chan:chanName"},
 			},
 			nil,
 		},
@@ -72,7 +72,7 @@ func TestParse(t *testing.T) {
 			&Memo{
 				Date: time.Unix(10*60*60-25, 0).UTC(),
 				Desc: "some message",
-				Tags: []string{"author:userName"},
+				Tags: []string{"memo", "author:userName"},
 			},
 			nil,
 		},
@@ -84,7 +84,7 @@ func TestParse(t *testing.T) {
 			&Memo{
 				Date: time.Unix(10*60*60, 0).UTC(),
 				Desc: "some message",
-				Tags: []string{"author:userName", "chan:chanName"},
+				Tags: []string{"memo", "author:userName", "chan:chanName"},
 			},
 			nil,
 		},
@@ -96,7 +96,7 @@ func TestParse(t *testing.T) {
 			&Memo{
 				Date: time.Unix(10*60*60-1, 0).UTC(),
 				Desc: "some message",
-				Tags: []string{"author:userName", "chan:chanName"},
+				Tags: []string{"memo", "author:userName", "chan:chanName"},
 			},
 			nil,
 		},
@@ -108,7 +108,7 @@ func TestParse(t *testing.T) {
 			&Memo{
 				Date: time.Unix(10*60*60-5*60-3, 0).UTC(),
 				Desc: "some message",
-				Tags: []string{"author:userName", "chan:chanName"},
+				Tags: []string{"memo", "author:userName", "chan:chanName"},
 			},
 			nil,
 		},
@@ -120,7 +120,7 @@ func TestParse(t *testing.T) {
 			&Memo{
 				Date: time.Unix(10*60*60-5*60-3, 0).UTC(),
 				Desc: "some message",
-				Tags: []string{"author:userName", "chan:chanName", "some:tag"},
+				Tags: []string{"memo", "author:userName", "chan:chanName", "some:tag"},
 			},
 			nil,
 		},
@@ -132,7 +132,7 @@ func TestParse(t *testing.T) {
 			&Memo{
 				Date: time.Unix(12*3600+34*60+56, 0).UTC(),
 				Desc: "some message",
-				Tags: []string{"author:userName", "chan:chanName", "some:tag", "xyz:tag"},
+				Tags: []string{"memo", "author:userName", "chan:chanName", "some:tag", "xyz:tag"},
 			},
 			nil,
 		},

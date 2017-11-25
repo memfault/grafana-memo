@@ -62,6 +62,7 @@ func getMemo(ch, usr, msg string, cl clock.Clock) (*Memo, error) {
 		return nil, errEmpty
 	}
 	tags := []string{
+		"memo",
 		"author:" + usr,
 	}
 	if ch != "null" {

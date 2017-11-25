@@ -12,11 +12,11 @@ func TestParse(t *testing.T) {
 	mock.Add(10 * time.Hour) // clock is now 1970-01-01 10:00:00 +0000 UTC
 
 	cases := []struct {
-		ch  string
-		usr string
-		msg string
-		m   *Memo
-		err error
+		ch     string
+		usr    string
+		msg    string
+		expM   *Memo
+		expErr error
 	}{
 		// test empty cases
 		{
@@ -146,12 +146,12 @@ func TestParse(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		out, err := getMemo(c.ch, c.usr, c.msg, mock)
-		if !reflect.DeepEqual(c.err, err) {
-			t.Errorf("case %d: bad err output\ninput: %#v\nexp %v\ngot %v", i, c.msg, c.err, err)
+		out, err := ParseMemo(c.ch, c.usr, c.msg, mock)
+		if !reflect.DeepEqual(c.expErr, err) {
+			t.Errorf("case %d: bad err output\ninput: %#v\nexp %v\ngot %v", i, c.msg, c.expErr, err)
 		}
-		if !reflect.DeepEqual(c.m, out) {
-			t.Errorf("case %d: bad memo output\ninput: %#v\nexp %v\ngot %v", i, c.msg, c.m, out)
+		if !reflect.DeepEqual(c.expM, out) {
+			t.Errorf("case %d: bad memo output\ninput: %#v\nexp %v\ngot %v", i, c.msg, c.expM, out)
 		}
 	}
 }

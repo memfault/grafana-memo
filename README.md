@@ -49,7 +49,7 @@ api_url = "http://localhost/api/"
 
 ```
 
-### Message format:
+#### Message format
 
 ```
 memo [timespec] <msg> [tags]
@@ -58,7 +58,7 @@ memo [timespec] <msg> [tags]
 `[foo]` denotes that `foo` is optional.
 
 
-### timespec
+#### timespe
 
 defaults to `25`, so by default it assumes your message is about 25 seconds after the actual event happened.
 
@@ -67,11 +67,11 @@ It can have the following formats:
 * `<duration>` like 0 (seconds), 10 (seconds), 30s, 1min20s, 2h, etc. see https://github.com/raintank/dur denotes how long ago the event took place
 * `<RFC3339 spec>` like `2013-06-05T14:10:43Z`
 
-### msg
+#### msg
 
 free-form text message, but if the first word looks like a timespec it will be interpreted as such.  Any words at the end with `:` in them will be interpreted as tags.
 
-# tags
+#### tags
 
 default tags included:
 

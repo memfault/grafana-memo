@@ -21,7 +21,8 @@ It can have the following formats:
 * `<RFC3339 spec>` like `2013-06-05T14:10:43Z`
 
 ## msg
-free-form text message
+
+free-form text message, but if the first word looks like a timespec it will be interpreted as such.  Any words at the end with `:` in them will be interpreted as tags.
 
 # tags
 

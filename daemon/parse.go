@@ -1,4 +1,4 @@
-package main
+package daemon
 
 import (
 	"sort"
@@ -7,19 +7,14 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/raintank/dur"
+	"github.com/raintank/memo"
 )
 
-type Memo struct {
-	Date time.Time
-	Desc string
-	Tags []string
-}
-
-func ParseMemo(ch, usr, msg string, cl clock.Clock) (*Memo, error) {
+func ParseMemo(ch, usr, msg string, cl clock.Clock) (memo.Memo, error) {
 	msg = strings.TrimSpace(msg)
 	words := strings.Fields(msg)
 	if len(words) == 0 {
-		return nil, errEmpty
+		return memo.Memo{}, errEmpty
 	}
 
 	ts := cl.Now().Add(-25 * time.Second)
@@ -40,14 +35,14 @@ func ParseMemo(ch, usr, msg string, cl clock.Clock) (*Memo, error) {
 		stripChars += len(words[i] + " ") // this is a bug, should account for true amount of whitespace. sue me
 		cleanTag := strings.TrimSpace(words[i])
 		if strings.HasPrefix(cleanTag, "author:") || strings.HasPrefix(cleanTag, "chan:") {
-			return nil, errFixedTag
+			return memo.Memo{}, errFixedTag
 		}
 		extraTags = append(extraTags, strings.TrimSpace(words[i]))
 	}
 	msg = msg[:len(msg)-stripChars]
 	msg = strings.TrimSpace(msg)
 	if len(msg) == 0 {
-		return nil, errEmpty
+		return memo.Memo{}, errEmpty
 	}
 	tags := []string{
 		"memo",
@@ -59,7 +54,7 @@ func ParseMemo(ch, usr, msg string, cl clock.Clock) (*Memo, error) {
 	sort.Strings(extraTags)
 	tags = append(tags, extraTags...)
 
-	return &Memo{
+	return memo.Memo{
 		ts.UTC(),
 		msg,
 		tags,

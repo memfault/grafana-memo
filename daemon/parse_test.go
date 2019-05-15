@@ -1,10 +1,12 @@
-package main
+package daemon
 
 import (
-	"github.com/benbjohnson/clock"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/benbjohnson/clock"
+	"github.com/raintank/memo"
 )
 
 func TestParse(t *testing.T) {
@@ -15,7 +17,7 @@ func TestParse(t *testing.T) {
 		ch     string
 		usr    string
 		msg    string
-		expM   *Memo
+		expM   memo.Memo
 		expErr error
 	}{
 		// test empty cases
@@ -23,21 +25,21 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			"",
-			nil,
+			memo.Memo{},
 			errEmpty,
 		},
 		{
 			"chanName",
 			"userName",
 			"  ",
-			nil,
+			memo.Memo{},
 			errEmpty,
 		},
 		{
 			"chanName",
 			"userName",
 			"	",
-			nil,
+			memo.Memo{},
 			errEmpty,
 		},
 		// standard case
@@ -45,7 +47,7 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			"message",
-			&Memo{
+			memo.Memo{
 				Date: time.Unix(10*60*60-25, 0).UTC(),
 				Desc: "message",
 				Tags: []string{"memo", "author:userName", "chan:chanName"},
@@ -57,7 +59,7 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			"   some message ",
-			&Memo{
+			memo.Memo{
 				Date: time.Unix(10*60*60-25, 0).UTC(),
 				Desc: "some message",
 				Tags: []string{"memo", "author:userName", "chan:chanName"},
@@ -69,7 +71,7 @@ func TestParse(t *testing.T) {
 			"null",
 			"userName",
 			"   some message ",
-			&Memo{
+			memo.Memo{
 				Date: time.Unix(10*60*60-25, 0).UTC(),
 				Desc: "some message",
 				Tags: []string{"memo", "author:userName"},
@@ -81,7 +83,7 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			" 0 some message",
-			&Memo{
+			memo.Memo{
 				Date: time.Unix(10*60*60, 0).UTC(),
 				Desc: "some message",
 				Tags: []string{"memo", "author:userName", "chan:chanName"},
@@ -93,7 +95,7 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			" 1 some message",
-			&Memo{
+			memo.Memo{
 				Date: time.Unix(10*60*60-1, 0).UTC(),
 				Desc: "some message",
 				Tags: []string{"memo", "author:userName", "chan:chanName"},
@@ -105,7 +107,7 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			" 5min3s some message",
-			&Memo{
+			memo.Memo{
 				Date: time.Unix(10*60*60-5*60-3, 0).UTC(),
 				Desc: "some message",
 				Tags: []string{"memo", "author:userName", "chan:chanName"},
@@ -117,7 +119,7 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			" 5min3s some message some:tag",
-			&Memo{
+			memo.Memo{
 				Date: time.Unix(10*60*60-5*60-3, 0).UTC(),
 				Desc: "some message",
 				Tags: []string{"memo", "author:userName", "chan:chanName", "some:tag"},
@@ -129,7 +131,7 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			" 1970-01-01T12:34:56Z some message some:tag xyz:tag",
-			&Memo{
+			memo.Memo{
 				Date: time.Unix(12*3600+34*60+56, 0).UTC(),
 				Desc: "some message",
 				Tags: []string{"memo", "author:userName", "chan:chanName", "some:tag", "xyz:tag"},
@@ -141,7 +143,7 @@ func TestParse(t *testing.T) {
 			"chanName",
 			"userName",
 			" 1970-01-01T12:34:56Z some message some:tag author:someone-else",
-			nil,
+			memo.Memo{},
 			errFixedTag,
 		},
 	}

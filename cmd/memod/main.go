@@ -37,6 +37,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create Grafana store: %s", err.Error())
 	}
+	err = store.Check()
+	if err != nil {
+		log.Fatalf("Grafana store is unhealthy: %s", err.Error())
+	}
 	daemon := daemon.New(config.Slack.ApiToken, store)
 
 	daemon.Run()

@@ -42,7 +42,7 @@ func NewGrafana(apiKey, apiUrl string) (Grafana, error) {
 		apiUrlAnnotations: urlAnnotations.String(),
 		apiUrlHealth:      urlHealth.String(),
 	}
-	return g, g.checkHealth()
+	return g, nil
 }
 
 type GrafanaHealthResp struct {
@@ -51,7 +51,7 @@ type GrafanaHealthResp struct {
 	Version  string
 }
 
-func (g Grafana) checkHealth() error {
+func (g Grafana) Check() error {
 	req, err := http.NewRequest("GET", g.apiUrlHealth, nil)
 	if err != nil {
 		return fmt.Errorf("grafana creation of request failed: %s", err)

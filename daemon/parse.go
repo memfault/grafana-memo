@@ -1,62 +1,47 @@
 package daemon
 
 import (
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/raintank/dur"
-	"github.com/raintank/memo"
 )
 
-func ParseMemo(ch, usr, msg string, cl clock.Clock) (memo.Memo, error) {
+func ParseCommand(msg string, cl clock.Clock) (time.Time, string, []string, error) {
 	msg = strings.TrimSpace(msg)
 	words := strings.Fields(msg)
 	if len(words) == 0 {
-		return memo.Memo{}, errEmpty
+		return time.Time{}, "", nil, errEmpty
 	}
 
+	// parse time offset out of message (if applicable) and set timestamp
 	ts := cl.Now().Add(-25 * time.Second)
 	dur, err := dur.ParseDuration(words[0])
 	if err == nil {
 		ts = cl.Now().Add(-time.Duration(dur) * time.Second)
-		msg = msg[len(words[0]):]
+		words = words[1:]
 	} else {
 		parsed, err := time.Parse(time.RFC3339, words[0])
 		if err == nil {
 			ts = parsed
-			msg = msg[len(words[0]):]
+			words = words[1:]
 		}
 	}
-	var extraTags []string
-	stripChars := 0
-	for i := len(words) - 1; i >= 0 && strings.Contains(words[i], ":"); i-- {
-		stripChars += len(words[i] + " ") // this is a bug, should account for true amount of whitespace. sue me
-		cleanTag := strings.TrimSpace(words[i])
-		if strings.HasPrefix(cleanTag, "author:") || strings.HasPrefix(cleanTag, "chan:") {
-			return memo.Memo{}, errFixedTag
-		}
-		extraTags = append(extraTags, strings.TrimSpace(words[i]))
+	if len(words) == 0 {
+		return time.Time{}, "", nil, errEmpty
 	}
-	msg = msg[:len(msg)-stripChars]
-	msg = strings.TrimSpace(msg)
-	if len(msg) == 0 {
-		return memo.Memo{}, errEmpty
-	}
-	tags := []string{
-		"memo",
-		"author:" + usr,
-	}
-	if ch != "null" {
-		tags = append(tags, "chan:"+ch)
-	}
-	sort.Strings(extraTags)
-	tags = append(tags, extraTags...)
 
-	return memo.Memo{
-		ts.UTC(),
-		msg,
-		tags,
-	}, nil
+	// parse extra tags out of message (if applicable)
+	pos := len(words) - 1 // pos of the last word that is not a tag
+	for strings.Contains(words[pos], ":") {
+		pos--
+		if pos < 0 {
+			return ts, msg, nil, errEmpty
+		}
+	}
+	extraTags := words[pos+1:]
+
+	return ts.UTC(), strings.Join(words[:pos+1], " "), extraTags, nil
+
 }

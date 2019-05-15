@@ -8,12 +8,12 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/nlopes/slack"
+	"github.com/raintank/memo"
 	"github.com/raintank/memo/store"
 	log "github.com/sirupsen/logrus"
 )
 
 var errEmpty = errors.New("empty message")
-var errFixedTag = errors.New("cannot override author or chan tag")
 var helpMessage = "Hi. I only support memo requests. See https://github.com/raintank/memo/blob/master/README.md#message-format"
 
 type Daemon struct {
@@ -100,11 +100,28 @@ func (d *Daemon) handleMessage(msg slack.Msg) {
 		// we're in a channel. don't spam in it. the message was probably not meant for us.
 		return
 	}
-	memo, err := ParseMemo(ch, usr, out[1], clock.New())
+	tags := []string{
+		"memo",
+		"author:" + usr,
+		"chan:" + ch,
+	}
+
+	ts, desc, extraTags, err := ParseCommand(out[1], clock.New())
 	if err != nil {
 		log.Infof("Received invalid memo request on channel %s, from user %s. message is: %s", ch, usr, out[1])
 		d.rtm.SendMessage(d.rtm.NewOutgoingMessage("bad memo request: "+err.Error(), msg.Channel))
 		return
+	}
+	tags, err = memo.BuildTags(tags, extraTags)
+	if err != nil {
+		log.Infof("Received invalid memo request on channel %s, from user %s. message is: %s", ch, usr, out[1])
+		d.rtm.SendMessage(d.rtm.NewOutgoingMessage("bad memo request: "+err.Error(), msg.Channel))
+		return
+	}
+	memo := memo.Memo{
+		Date: ts.UTC(),
+		Desc: desc,
+		Tags: tags,
 	}
 	log.Infof("Received a valid memo request on channel %s, from user %s. message is: %s", ch, usr, out[1])
 

@@ -23,6 +23,10 @@ type Daemon struct {
 	info     *slack.Info
 	rtm      *slack.RTM
 	store    store.Store
+
+	// see https://github.com/nlopes/slack/issues/532
+	chanIdToNameCache map[string]string
+	userIdToNameCache map[string]string
 }
 
 func New(apiToken string, store store.Store) *Daemon {
@@ -30,6 +34,9 @@ func New(apiToken string, store store.Store) *Daemon {
 		apiToken: apiToken,
 		re:       regexp.MustCompile("^memo (.*)"),
 		store:    store,
+
+		chanIdToNameCache: make(map[string]string),
+		userIdToNameCache: make(map[string]string),
 	}
 	return &d
 }
@@ -111,19 +118,37 @@ func (d *Daemon) handleMessage(msg slack.Msg) {
 }
 
 func (d *Daemon) chanIdToName(id string) string {
+	name, ok := d.chanIdToNameCache[id]
+	if ok {
+		return name
+	}
 	for _, ch := range d.info.Channels {
 		if ch.ID == id {
 			return ch.Name
 		}
 	}
-	return "null"
+	g, err := d.api.GetChannelInfo(id)
+	if err != nil {
+		return "null"
+	}
+	d.chanIdToNameCache[id] = g.Name
+	return g.Name
 }
 
 func (d *Daemon) userIdToName(id string) string {
+	name, ok := d.userIdToNameCache[id]
+	if ok {
+		return name
+	}
 	for _, usr := range d.info.Users {
 		if usr.ID == id {
 			return usr.Name
 		}
 	}
-	return "null"
+	u, err := d.api.GetUserInfo(id)
+	if err != nil {
+		return "null"
+	}
+	d.userIdToNameCache[id] = u.Name
+	return u.Name
 }

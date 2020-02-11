@@ -139,11 +139,6 @@ func (d *Daemon) chanIdToName(id string) string {
 	if ok {
 		return name
 	}
-	for _, ch := range d.info.Channels {
-		if ch.ID == id {
-			return ch.Name
-		}
-	}
 	g, err := d.api.GetChannelInfo(id)
 	if err != nil {
 		return "null"
@@ -156,11 +151,6 @@ func (d *Daemon) userIdToName(id string) string {
 	name, ok := d.userIdToNameCache[id]
 	if ok {
 		return name
-	}
-	for _, usr := range d.info.Users {
-		if usr.ID == id {
-			return usr.Name
-		}
 	}
 	u, err := d.api.GetUserInfo(id)
 	if err != nil {

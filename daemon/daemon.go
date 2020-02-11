@@ -88,7 +88,8 @@ func (d *Daemon) handleMessage(msg slack.Msg) {
 
 	out := d.re.FindStringSubmatch(msg.Text)
 	if len(out) == 0 {
-		if strings.HasPrefix(msg.Text, "memo:") || strings.HasPrefix(msg.Text, "mrbot:") {
+		// handle the case of a user typing <our-username>: some message
+		if strings.HasPrefix(msg.Text, "memo:") || strings.HasPrefix(msg.Text, "mrbot:") || strings.HasPrefix(msg.Text, "memobot:") {
 			d.rtm.SendMessage(d.rtm.NewOutgoingMessage(helpMessage, msg.Channel))
 			return
 		}

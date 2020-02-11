@@ -90,15 +90,18 @@ func (d *Daemon) handleMessage(msg slack.Msg) {
 	if len(out) == 0 {
 		// handle the case of a user typing <our-username>: some message
 		if strings.HasPrefix(msg.Text, "memo:") || strings.HasPrefix(msg.Text, "mrbot:") || strings.HasPrefix(msg.Text, "memobot:") {
+			log.Debugf("A user seems to direct a message %q to us, but we don't understand it. so sending help message back", msg.Text)
 			d.rtm.SendMessage(d.rtm.NewOutgoingMessage(helpMessage, msg.Channel))
 			return
 		}
 		// we're in a private message. anything the user says is for us
 		if ch == "null" {
+			log.Debugf("A user sent us a DM %q but we don't understand it. so sending help message back", msg.Text)
 			d.rtm.SendMessage(d.rtm.NewOutgoingMessage(helpMessage, msg.Channel))
 			return
 		}
 		// we're in a channel. don't spam in it. the message was probably not meant for us.
+		log.Tracef("Received message %q, not for us. ignoring", msg.Text)
 		return
 	}
 	tags := []string{
@@ -106,6 +109,8 @@ func (d *Daemon) handleMessage(msg slack.Msg) {
 		"author:" + usr,
 		"chan:" + ch,
 	}
+
+	log.Debugf("A user sent us the command %q", msg.Text)
 
 	ts, desc, extraTags, err := ParseCommand(out[1], clock.New())
 	if err != nil {

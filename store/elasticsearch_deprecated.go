@@ -3,8 +3,8 @@ package store
 import (
 	"errors"
 
-	elastigo "github.com/mattbaird/elastigo/lib"
 	"github.com/grafana/memo"
+	elastigo "github.com/mattbaird/elastigo/lib"
 )
 
 // Elastic is an annotations store backed by elasticsearch

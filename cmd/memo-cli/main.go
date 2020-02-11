@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/raintank/memo"
-	"github.com/raintank/memo/cfg"
-	"github.com/raintank/memo/store"
+	"github.com/grafana/memo"
+	"github.com/grafana/memo/cfg"
+	"github.com/grafana/memo/store"
 )
 
 var configFile string

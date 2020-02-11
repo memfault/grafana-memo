@@ -7,14 +7,14 @@ import (
 	"strings"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/memo"
+	"github.com/grafana/memo/store"
 	"github.com/nlopes/slack"
-	"github.com/raintank/memo"
-	"github.com/raintank/memo/store"
 	log "github.com/sirupsen/logrus"
 )
 
 var errEmpty = errors.New("empty message")
-var helpMessage = "Hi. I only support memo requests. See https://github.com/raintank/memo/blob/master/README.md#message-format"
+var helpMessage = "Hi. I only support memo requests. See https://github.com/grafana/memo/blob/master/README.md#message-format"
 
 type Daemon struct {
 	apiToken string

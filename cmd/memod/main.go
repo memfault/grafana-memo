@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/raintank/memo/cfg"
-	"github.com/raintank/memo/daemon"
-	"github.com/raintank/memo/store"
+	"github.com/grafana/memo/cfg"
+	"github.com/grafana/memo/daemon"
+	"github.com/grafana/memo/store"
 	log "github.com/sirupsen/logrus"
 )
 

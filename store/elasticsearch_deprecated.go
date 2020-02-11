@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	elastigo "github.com/mattbaird/elastigo/lib"
-	"github.com/raintank/memo"
+	"github.com/grafana/memo"
 )
 
 // Elastic is an annotations store backed by elasticsearch

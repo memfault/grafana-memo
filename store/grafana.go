@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/raintank/memo"
+	"github.com/grafana/memo"
 	log "github.com/sirupsen/logrus"
 )
 

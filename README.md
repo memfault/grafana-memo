@@ -58,7 +58,7 @@ memo [timespec] <msg> [tags]
 `[foo]` denotes that `foo` is optional.
 
 
-#### timespe
+#### timespec
 
 defaults to `25`, so by default it assumes your message is about 25 seconds after the actual event happened.
 

@@ -30,14 +30,6 @@ Usage of ./memo-cli:
     	unix timestamp. always defaults to 'now' (default 1557953985)
 ```
 
-Config file looks like:
-
-```
-[grafana]
-api_key = "<grafana api key, editor role>"
-api_url = "https://<grafana host>/api/"
-```
-
 ## memod
 
 Connects to slack and listens for "memo" messages which - if correctly formatted - will result in an annotation on the configured Grafana server
@@ -75,9 +67,9 @@ default tags included:
 you can extend these. any words at the end of the command that have `:` will be used as key-value tags.
 But you cannot override any of the default tags
 
-# Installation of memod
+# Installation
 
-## Configure slack
+## Configure slack (only for memod)
 
 You set up the slack bot as a [bot integration](https://api.slack.com/bot-users).
 Essentially in your slack workspace configuration, you create a bot with the name "memobot" and a token, and specify which channels to join by default.
@@ -87,7 +79,33 @@ Note that after the bot joins, you can still invite it into - or remove from - a
 
 ![configure slack](./docs/img/memo-slack-config.png)
 
-## Set up memod
+## Install the program
+
+Currently we don't publish distribution packages, docker images etc.
+So for now, you need to build the binary/binaries from source
+
+First, [install golang](https://golang.org/dl/)
+Then, run any of these commands to download the source code and build the binaries:
+
+```
+go get github.com/grafana/memo/cmd/memod    # only memod, the slack bot
+go get github.com/grafana/memo/cmd/memo-cli # only memo-cli, the command line tool
+go get github.com/grafana/memo/cmd/...      # both
+```
+
+You will then have the binaries in `$HOME/bin` or in `$GOPATH/bin` if you have a custom GOPATH set.
+
+## config file for memo-cli
+
+Put this file in `~/.memo.toml`
+
+```
+[grafana]
+api_key = "<grafana api key, editor role>"
+api_url = "https://<grafana host>/api/"
+```
+
+## config file for memod
 
 Put a config file like below in `/etc/memo.toml`.
 
@@ -103,8 +121,11 @@ api_key = "<grafana api key, editor role>"
 api_url = "http://localhost/api/"
 ```
 
+## auto-starting memod
+
 If you use upstart, you need to create an init file and put it in /etc/init/memo.conf
 For your convenience you can use our [example upstart config file](./var/upstart-memo.conf)
+In this case also copy the binary to `/usr/bin/memod`.
 
 ## Set up the Grafana integration
 

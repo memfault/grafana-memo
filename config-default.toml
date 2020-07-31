@@ -7,3 +7,5 @@ api_token = ""
 [grafana]
 api_key = ""
 api_url = "http://localhost/api/"
+# tls_key = ""
+# tls_cert = ""

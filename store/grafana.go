@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,15 +15,17 @@ import (
 )
 
 type Grafana struct {
-	apiKey string
-	apiUrl string // e.g. http://localhost/api/
+	apiKey  string
+	apiUrl  string // e.g. http://localhost/api/
+	tlsKey  string // e.g. /path/to/key.pem
+	tlsCert string
 
 	bearerHeader      string
 	apiUrlAnnotations string
 	apiUrlHealth      string
 }
 
-func NewGrafana(apiKey, apiUrl string) (Grafana, error) {
+func NewGrafana(apiKey, apiUrl, tlsKey, tlsCert string) (Grafana, error) {
 	u, err := url.Parse(apiUrl)
 	if err != nil {
 		return Grafana{}, err
@@ -35,8 +38,10 @@ func NewGrafana(apiKey, apiUrl string) (Grafana, error) {
 	urlHealth.Path = path.Join(u.Path, "health")
 
 	g := Grafana{
-		apiKey: apiKey,
-		apiUrl: apiUrl,
+		apiKey:  apiKey,
+		apiUrl:  apiUrl,
+		tlsKey:  tlsKey,
+		tlsCert: tlsCert,
 
 		bearerHeader:      fmt.Sprintf("Bearer %s", apiKey),
 		apiUrlAnnotations: urlAnnotations.String(),
@@ -51,7 +56,30 @@ type GrafanaHealthResp struct {
 	Version  string
 }
 
+func (g Grafana) httpClient() (*http.Client, error) {
+	client := &http.Client{}
+
+	if g.tlsKey != "" || g.tlsCert != "" {
+		// Load client cert
+		cert, err := tls.LoadX509KeyPair(g.tlsCert, g.tlsKey)
+		if err != nil {
+			return nil, err
+		}
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}
+		transport := &http.Transport{TLSClientConfig: tlsConfig}
+		client.Transport = transport
+	}
+	return client, nil
+}
+
 func (g Grafana) Check() error {
+	client, err := g.httpClient()
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest("GET", g.apiUrlHealth, nil)
 	if err != nil {
 		return fmt.Errorf("grafana creation of request failed: %s", err)
@@ -59,7 +87,7 @@ func (g Grafana) Check() error {
 
 	req.Header.Set("Authorization", g.bearerHeader)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("grafana health check fail: %s", err)
 	}
@@ -105,6 +133,11 @@ func (g Grafana) Save(memo memo.Memo) error {
 	}
 	jsonValue, _ := json.Marshal(ga)
 
+	client, err := g.httpClient()
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest("POST", g.apiUrlAnnotations, bytes.NewBuffer(jsonValue))
 	if err != nil {
 		return fmt.Errorf("grafana creation of request failed: %s", err)
@@ -113,7 +146,7 @@ func (g Grafana) Save(memo memo.Memo) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", g.bearerHeader)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("grafana post fail: %s", err)
 	}

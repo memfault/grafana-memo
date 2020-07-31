@@ -33,7 +33,7 @@ func main() {
 	log.SetLevel(lvl)
 	log.SetOutput(os.Stdout)
 
-	store, err := store.NewGrafana(config.Grafana.ApiKey, config.Grafana.ApiUrl)
+	store, err := store.NewGrafana(config.Grafana.ApiKey, config.Grafana.ApiUrl, config.Grafana.TLSKey, config.Grafana.TLSCert)
 	if err != nil {
 		log.Fatalf("failed to create Grafana store: %s", err.Error())
 	}

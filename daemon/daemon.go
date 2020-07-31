@@ -9,8 +9,8 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/memo"
 	"github.com/grafana/memo/store"
-	"github.com/nlopes/slack"
 	log "github.com/sirupsen/logrus"
+	"github.com/slack-go/slack"
 )
 
 var errEmpty = errors.New("empty message")
@@ -76,6 +76,7 @@ func (d *Daemon) Run() {
 				log.Fatalf("Invalid credentials")
 
 			default:
+				log.Trace("Unhandled msg:", ev)
 				// lots of other kinds of messages that we can ignore
 			}
 		}
@@ -145,8 +146,9 @@ func (d *Daemon) chanIdToName(id string) string {
 	if ok {
 		return name
 	}
-	g, err := d.api.GetChannelInfo(id)
+	g, err := d.api.GetConversationInfo(id, false)
 	if err != nil {
+		log.Debugf("GetChannelInfo error: %s", err.Error())
 		return "null"
 	}
 	d.chanIdToNameCache[id] = g.Name
@@ -160,6 +162,7 @@ func (d *Daemon) userIdToName(id string) string {
 	}
 	u, err := d.api.GetUserInfo(id)
 	if err != nil {
+		log.Debugf("GetUserInfo error: %s", err.Error())
 		return "null"
 	}
 	d.userIdToNameCache[id] = u.Name

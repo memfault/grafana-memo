@@ -11,6 +11,8 @@ type Slack struct {
 }
 
 type Grafana struct {
-	ApiKey string `toml:"api_key"`
-	ApiUrl string `toml:"api_url"`
+	ApiKey  string `toml:"api_key"`
+	ApiUrl  string `toml:"api_url"`
+	TLSKey  string `toml:"tls_key"`
+	TLSCert string `toml:"tls_cert"`
 }

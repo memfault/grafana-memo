@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"os"
 	"os/user"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/grafana/memo"
 	"github.com/grafana/memo/cfg"
 	"github.com/grafana/memo/store"
+	"github.com/mitchellh/go-homedir"
 )
 
 var configFile string
@@ -45,8 +44,10 @@ func main() {
 		os.Exit(2)
 	}
 
-	if strings.HasPrefix(configFile, "~/") {
-		configFile = filepath.Join(usr.HomeDir, configFile[2:])
+	configFile, err = homedir.Expand(configFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get path to config file (%s): %s\n", configFile, err.Error())
+		os.Exit(2)
 	}
 
 	var config cfg.Config
@@ -56,7 +57,24 @@ func main() {
 		os.Exit(2)
 	}
 
-	store, err := store.NewGrafana(config.Grafana.ApiKey, config.Grafana.ApiUrl)
+	var tlsKey string
+	var tlsCert string
+	if config.Grafana.TLSKey != "" {
+		tlsKey, err = homedir.Expand(config.Grafana.TLSKey)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read tls_key (%s): %s\n", config.Grafana.TLSKey, err.Error())
+			os.Exit(2)
+		}
+	}
+	if config.Grafana.TLSCert != "" {
+		tlsCert, err = homedir.Expand(config.Grafana.TLSCert)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read tls_cert (%s): %s\n", config.Grafana.TLSCert, err.Error())
+			os.Exit(2)
+		}
+	}
+
+	store, err := store.NewGrafana(config.Grafana.ApiKey, config.Grafana.ApiUrl, tlsKey, tlsCert)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create Grafana store: %s\n", err.Error())
 		os.Exit(2)

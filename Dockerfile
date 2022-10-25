@@ -14,7 +14,7 @@ RUN go get -v && \
 
 FROM alpine:latest
 
-COPY --from=builder /opt/memod /bin/memod
-COPY --from=builder /opt/memo-cli /bin/memo-cli
+COPY --from=builder /opt/memo/memod /bin/memod
+COPY --from=builder /opt/memo/memo-cli /bin/memo-cli
 
 CMD [ "memod" ]

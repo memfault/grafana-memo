@@ -12,7 +12,7 @@ func ParseCommand(msg string, cl clock.Clock) (time.Time, string, []string, erro
 	msg = strings.TrimSpace(msg)
 	words := strings.Fields(msg)
 	if len(words) == 0 {
-		return time.Time{}, "", nil, errEmpty
+		return time.Time{}, "", nil, ErrEmpty
 	}
 
 	// parse time offset out of message (if applicable) and set timestamp
@@ -29,7 +29,7 @@ func ParseCommand(msg string, cl clock.Clock) (time.Time, string, []string, erro
 		}
 	}
 	if len(words) == 0 {
-		return time.Time{}, "", nil, errEmpty
+		return time.Time{}, "", nil, ErrEmpty
 	}
 
 	// parse extra tags out of message (if applicable)
@@ -37,7 +37,7 @@ func ParseCommand(msg string, cl clock.Clock) (time.Time, string, []string, erro
 	for strings.Contains(words[pos], ":") {
 		pos--
 		if pos < 0 {
-			return ts, msg, nil, errEmpty
+			return ts, msg, nil, ErrEmpty
 		}
 	}
 	extraTags := words[pos+1:]

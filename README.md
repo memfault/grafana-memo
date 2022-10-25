@@ -10,10 +10,10 @@ Comes with 2 programs:
 
 ## Huh?
 
-Turn a slack message like this ...  
-![usage in slack](./docs/img/memo-slack-screenshot.png)  
-... into an annotation like this:  
-![usage in slack](./docs/img/memo-in-grafana-from-slack.png)  
+Turn a slack message like this ...
+![usage in slack](./docs/img/memo-slack-screenshot.png)
+... into an annotation like this:
+![usage in slack](./docs/img/memo-in-grafana-from-slack.png)
 Luckily somebody shared this memo on slack, otherwise somebody might freak out if they see this chart!
 
 ## memo-cli
@@ -79,6 +79,20 @@ Note that after the bot joins, you can still invite it into - or remove from - a
 
 ![configure slack](./docs/img/memo-slack-config.png)
 
+1. Create an app token
+1. Enable socket mode on your application
+1. Enable event subscriptions
+1. Subscribe to `message.channels` and `message.im`
+1. Create a bot token (in OAuth and Permissions)
+
+### Scopes required for bot token:
+- channels:history
+- channels:read
+- chat:write
+- im:history
+- im:read
+- users:read
+
 ## Install the program
 
 Currently we don't publish distribution packages, docker images etc.
@@ -134,4 +148,14 @@ Make sure to set it to the Grafana datasource and use filtering by tag, you can 
 
 ![Grafana annotation query](./docs/img/configure-grafana-for-memo.png)
 
+# Docker
 
+A docker image is compiled for convenience:
+
+```
+# memod
+docker run -v "${PWD}/config.toml:/etc/memo.toml" memo:latest
+
+# memo-cli
+docker run -v "${PWD}/config.toml:/etc/memo.toml" memo:latest memo-cli -config /etc/memo.toml -msg "test"
+```

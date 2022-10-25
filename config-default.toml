@@ -2,7 +2,8 @@
 log_level = "info"
 
 [slack]
-api_token = ""
+app_token = ""
+bot_token = ""
 
 [grafana]
 api_key = ""

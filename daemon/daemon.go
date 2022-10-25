@@ -3,6 +3,8 @@ package daemon
 import (
 	"errors"
 	"fmt"
+	llog "log"
+	"os"
 	"regexp"
 	"strings"
 
@@ -11,29 +13,35 @@ import (
 	"github.com/grafana/memo/store"
 	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
+	"github.com/slack-go/slack/socketmode"
 )
 
-var errEmpty = errors.New("empty message")
+var ErrEmpty = errors.New("empty message")
 var helpMessage = "Hi. I only support memo requests. See https://github.com/grafana/memo/blob/master/README.md#message-format"
 
 type Daemon struct {
-	apiToken string
-	re       *regexp.Regexp
-	api      *slack.Client
-	info     *slack.Info
-	rtm      *slack.RTM
-	store    store.Store
+	botToken string
+	appToken string
+
+	re     *regexp.Regexp
+	api    *slack.Client
+	info   *slack.Info
+	socket *socketmode.Client
+	store  store.Store
 
 	// see https://github.com/nlopes/slack/issues/532
 	chanIdToNameCache map[string]string
 	userIdToNameCache map[string]string
 }
 
-func New(apiToken string, store store.Store) *Daemon {
+func New(botToken string, appToken string, store store.Store) *Daemon {
 	d := Daemon{
-		apiToken: apiToken,
-		re:       regexp.MustCompile("^memo (.*)"),
-		store:    store,
+		botToken: botToken,
+		appToken: appToken,
+
+		re:    regexp.MustCompile("^memo (.*)"),
+		store: store,
 
 		chanIdToNameCache: make(map[string]string),
 		userIdToNameCache: make(map[string]string),
@@ -43,47 +51,61 @@ func New(apiToken string, store store.Store) *Daemon {
 
 func (d *Daemon) Run() {
 	log.Info("Memo starting")
-	d.api = slack.New(d.apiToken)
-	d.rtm = d.api.NewRTM()
-	go d.rtm.ManageConnection()
-	for {
-		select {
-		case msg := <-d.rtm.IncomingEvents:
-			switch ev := msg.Data.(type) {
-			case *slack.ConnectingEvent:
-				log.Infof("Connecting to slack. attempt %d", ev.Attempt)
+	d.api = slack.New(
+		d.botToken,
+		slack.OptionAppLevelToken(d.appToken),
+	)
 
-			case *slack.ConnectedEvent:
-				log.Info("Connected to slack")
-				d.info = ev.Info
+	d.socket = socketmode.New(
+		d.api,
+		socketmode.OptionDebug(false),
+		socketmode.OptionLog(llog.New(os.Stdout, "slack", llog.Lshortfile|llog.LstdFlags)),
+	)
 
-			case *slack.HelloEvent:
-				log.Info("Received hello from slack")
+	go func() {
+		for evt := range d.socket.Events {
+			switch evt.Type {
+			case socketmode.EventTypeConnecting:
+				log.Info("Connecting to slack")
+			case socketmode.EventTypeConnectionError:
+				log.Errorf("Connection error: %v", evt)
+			case socketmode.EventTypeConnected:
+				log.Info("Socket connected")
+			case socketmode.EventTypeDisconnect:
+				log.Info("Socket disconnected")
+			case socketmode.EventTypeIncomingError:
+				log.Errorf("Connection error: %v", evt)
+			case socketmode.EventTypeHello:
+				log.Info("Received hello from slack, hi!")
+			case socketmode.EventTypeEventsAPI:
+				eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
+				if !ok {
+					fmt.Printf("Ignored %+v\n", evt)
 
-			case *slack.MessageEvent:
-				d.handleMessage(ev.Msg)
+					continue
+				}
 
-			case *slack.PresenceChangeEvent:
-				log.Infof("Presence changed to type:%s - presence:%s - user%s", ev.Type, ev.Presence, ev.User)
-
-			case *slack.LatencyReport:
-				log.Debugf("Current latency: %v\n", ev.Value)
-
-			case *slack.RTMError:
-				log.Warnf("Error: %s\n", ev.Error())
-
-			case *slack.InvalidAuthEvent:
-				log.Fatalf("Invalid credentials")
-
+				d.socket.Ack(*evt.Request)
+				switch eventsAPIEvent.Type {
+				case slackevents.CallbackEvent:
+					innerEvent := eventsAPIEvent.InnerEvent
+					switch ev := innerEvent.Data.(type) {
+					case *slackevents.MessageEvent:
+						d.handleMessage(ev)
+					}
+				}
 			default:
-				log.Trace("Unhandled msg:", ev)
-				// lots of other kinds of messages that we can ignore
+				fmt.Fprintf(os.Stderr, "Unexpected event type received: %s\n", evt.Type)
 			}
 		}
-	}
+	}()
+
+	log.Printf("Running")
+	err := d.socket.Run()
+	log.Errorf("Stopping: %s", err.Error())
 }
 
-func (d *Daemon) handleMessage(msg slack.Msg) {
+func (d *Daemon) handleMessage(msg *slackevents.MessageEvent) {
 	ch := d.chanIdToName(msg.Channel)
 	usr := d.userIdToName(msg.User)
 
@@ -92,19 +114,20 @@ func (d *Daemon) handleMessage(msg slack.Msg) {
 		// handle the case of a user typing <our-username>: some message
 		if strings.HasPrefix(msg.Text, "memo:") || strings.HasPrefix(msg.Text, "mrbot:") || strings.HasPrefix(msg.Text, "memobot:") {
 			log.Debugf("A user seems to direct a message %q to us, but we don't understand it. so sending help message back", msg.Text)
-			d.rtm.SendMessage(d.rtm.NewOutgoingMessage(helpMessage, msg.Channel))
+			d.api.PostMessage(msg.Channel, slack.MsgOptionPostEphemeral(msg.User), slack.MsgOptionText(helpMessage, false))
 			return
 		}
 		// we're in a private message. anything the user says is for us
 		if ch == "null" {
 			log.Debugf("A user sent us a DM %q but we don't understand it. so sending help message back", msg.Text)
-			d.rtm.SendMessage(d.rtm.NewOutgoingMessage(helpMessage, msg.Channel))
+			d.api.PostMessage(msg.Channel, slack.MsgOptionPostEphemeral(msg.User), slack.MsgOptionText(helpMessage, false))
 			return
 		}
 		// we're in a channel. don't spam in it. the message was probably not meant for us.
 		log.Tracef("Received message %q, not for us. ignoring", msg.Text)
 		return
 	}
+
 	tags := []string{
 		"memo",
 		"author:" + usr,
@@ -116,13 +139,13 @@ func (d *Daemon) handleMessage(msg slack.Msg) {
 	ts, desc, extraTags, err := ParseCommand(out[1], clock.New())
 	if err != nil {
 		log.Infof("Received invalid memo request on channel %s, from user %s. message is: %s", ch, usr, out[1])
-		d.rtm.SendMessage(d.rtm.NewOutgoingMessage("bad memo request: "+err.Error(), msg.Channel))
+		d.api.PostMessage(msg.Channel, slack.MsgOptionPostEphemeral(msg.User), slack.MsgOptionText("bad memo request: "+err.Error(), false))
 		return
 	}
 	tags, err = memo.BuildTags(tags, extraTags)
 	if err != nil {
 		log.Infof("Received invalid memo request on channel %s, from user %s. message is: %s", ch, usr, out[1])
-		d.rtm.SendMessage(d.rtm.NewOutgoingMessage("bad memo request: "+err.Error(), msg.Channel))
+		d.api.PostMessage(msg.Channel, slack.MsgOptionPostEphemeral(msg.User), slack.MsgOptionText("bad memo request: "+err.Error(), false))
 		return
 	}
 	memo := memo.Memo{
@@ -134,11 +157,11 @@ func (d *Daemon) handleMessage(msg slack.Msg) {
 
 	err = d.store.Save(memo)
 	if err != nil {
-		d.rtm.SendMessage(d.rtm.NewOutgoingMessage(fmt.Sprintf("memo failed: %s", err.Error()), msg.Channel))
+		d.api.PostMessage(msg.Channel, slack.MsgOptionPostEphemeral(msg.User), slack.MsgOptionText("memo failed: "+err.Error(), false))
 		return
 	}
 
-	d.rtm.SendMessage(d.rtm.NewOutgoingMessage("Memo saved", msg.Channel))
+	d.api.PostMessage(msg.Channel, slack.MsgOptionPostEphemeral(msg.User), slack.MsgOptionText("Memo saved", false))
 }
 
 func (d *Daemon) chanIdToName(id string) string {
@@ -162,7 +185,7 @@ func (d *Daemon) userIdToName(id string) string {
 	}
 	u, err := d.api.GetUserInfo(id)
 	if err != nil {
-		log.Debugf("GetUserInfo error: %s", err.Error())
+		log.Errorf("GetUserInfo error: %s (You probably don't have the `users:read` scope)", err.Error())
 		return "null"
 	}
 	d.userIdToNameCache[id] = u.Name

@@ -155,8 +155,8 @@ A docker image is compiled for convenience:
 
 ```
 # memod
-docker run -v "${PWD}/config.toml:/etc/memo.toml" memo:latest
+docker run -v "${PWD}/config.toml:/etc/memo.toml" ghcr.io/grafana/memo:latest
 
 # memo-cli
-docker run -v "${PWD}/config.toml:/etc/memo.toml" memo:latest memo-cli -config /etc/memo.toml -msg "test"
+docker run -v "${PWD}/config.toml:/etc/memo.toml" ghcr.io/grafana/memo:latest memo-cli -config /etc/memo.toml -msg "test"
 ```

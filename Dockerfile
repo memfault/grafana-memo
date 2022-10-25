@@ -8,8 +8,8 @@ RUN apk --update add --no-cache ca-certificates openssl git tzdata && \
   update-ca-certificates
 
 RUN go get -v && \
-  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o memod cmd/memod/main.go && \
-  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o memo-cli cmd/memo-cli/main.go && \
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o memod cmd/memod/* && \
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o memo-cli cmd/memo-cli/* && \
   chmod +x memod memo-cli
 
 FROM alpine:latest

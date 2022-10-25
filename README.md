@@ -128,7 +128,8 @@ Put a config file like below in `/etc/memo.toml`.
 log_level = "info"
 
 [slack]
-api_token = "<slack api token>"
+bot_token = "<slack bot token>"
+app_token = "<slack app token>"
 
 [grafana]
 api_key = "<grafana api key, editor role>"

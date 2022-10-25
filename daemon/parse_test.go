@@ -23,15 +23,15 @@ func TestParse(t *testing.T) {
 		// test empty cases
 		{
 			msg:    "",
-			expErr: errEmpty,
+			expErr: ErrEmpty,
 		},
 		{
 			msg:    "  ",
-			expErr: errEmpty,
+			expErr: ErrEmpty,
 		},
 		{
-			msg: "	",
-			expErr: errEmpty,
+			msg:    "	",
+			expErr: ErrEmpty,
 		},
 		// standard case
 		{

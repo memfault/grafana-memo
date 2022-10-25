@@ -7,7 +7,8 @@ type Config struct {
 }
 
 type Slack struct {
-	ApiToken string `toml:"api_token"`
+	BotToken string `toml:"bot_token"`
+	AppToken string `toml:"app_token"`
 }
 
 type Grafana struct {

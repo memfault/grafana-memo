@@ -1,12 +1,14 @@
-package daemon
+package parser
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/memo"
 )
 
 func TestParse(t *testing.T) {
@@ -23,15 +25,15 @@ func TestParse(t *testing.T) {
 		// test empty cases
 		{
 			msg:    "",
-			expErr: ErrEmpty,
+			expErr: memo.ErrEmpty,
 		},
 		{
 			msg:    "  ",
-			expErr: ErrEmpty,
+			expErr: memo.ErrEmpty,
 		},
 		{
 			msg:    "	",
-			expErr: ErrEmpty,
+			expErr: memo.ErrEmpty,
 		},
 		// standard case
 		{
@@ -83,18 +85,23 @@ func TestParse(t *testing.T) {
 			expTags: []string{"some:tag", "xyz:tag"},
 		},
 	}
+
+	parser := New()
+
 	for i, c := range cases {
-		date, desc, tags, err := ParseCommand(c.msg, mock)
-		if !reflect.DeepEqual(c.expErr, err) {
+		memo, err := parser.Parse(c.msg)
+		if !errors.Is(err, c.expErr) {
 			t.Errorf("case %d: bad err output\ninput: %#v\nexp %v\ngot %v", i, c.msg, c.expErr, err)
 		}
+
 		if err != nil {
 			continue
 		}
-		if date != c.expDate || desc != c.expDesc || !reflect.DeepEqual(c.expTags, tags) {
-			fmt.Println(date != c.expDate)
-			fmt.Println(desc != c.expDesc, !reflect.DeepEqual(c.expTags, tags))
-			t.Errorf("case %d: bad output\ninput: %#v\nexp date=%s, desc=%q, tags=%v\ngot date=%s, desc=%q, tags=%v\n", i, c.msg, c.expDate, c.expDesc, c.expTags, date, desc, tags)
+
+		if memo.Date != c.expDate || memo.Desc != c.expDesc || !reflect.DeepEqual(c.expTags, memo.Tags) {
+			fmt.Println(memo.Date != c.expDate)
+			fmt.Println(memo.Desc != c.expDesc, !reflect.DeepEqual(c.expTags, memo.Tags))
+			t.Errorf("case %d: bad output\ninput: %#v\nexp date=%s, desc=%q, tags=%v\ngot date=%s, desc=%q, tags=%v\n", i, c.msg, c.expDate, c.expDesc, c.expTags, memo.Date, memo.Desc, memo.Tags)
 		}
 	}
 }

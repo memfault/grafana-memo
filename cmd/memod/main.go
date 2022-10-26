@@ -12,6 +12,7 @@ import (
 
 var configFile = "/etc/memo.toml"
 
+// main
 func main() {
 	if len(os.Args) > 2 {
 		log.Fatal("usage: memo [path-to-config]")
@@ -30,6 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to parse log-level %q: %s", config.LogLevel, err.Error())
 	}
+
 	log.SetLevel(lvl)
 	log.SetOutput(os.Stdout)
 
@@ -41,7 +43,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Grafana store is unhealthy: %s", err.Error())
 	}
-	daemon := daemon.New(config.Slack.BotToken, config.Slack.AppToken, store)
+
+	daemon := daemon.New(config, store)
 
 	daemon.Run()
 }

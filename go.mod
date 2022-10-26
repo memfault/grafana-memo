@@ -8,6 +8,7 @@ require (
 	github.com/benbjohnson/clock v1.0.3
 	github.com/bitly/go-hostpool v0.1.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
+	github.com/bwmarrin/discordgo v0.26.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b

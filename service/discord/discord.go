@@ -45,6 +45,10 @@ func (d *DiscordService) handleMessage(s *discordgo.Session, m *discordgo.Messag
 		return
 	}
 
+	if memo == nil {
+		return
+	}
+
 	tags := []string{
 		"author:" + m.Author.Username,
 		"chan:" + m.ChannelID,

@@ -2,7 +2,6 @@ package parser
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -37,59 +36,59 @@ func TestParse(t *testing.T) {
 		},
 		// standard case
 		{
-			msg:     "message",
-			expDate: time.Unix(10*60*60-25, 0).UTC(),
+			msg:     "memo message",
+			expDate: time.Unix(0, 0).UTC(),
 			expDesc: "message",
-			expTags: []string{},
+			expTags: []string{"memo"},
 		},
 		// standard with extraneous whitespace
 		{
-			msg:     "   some message ",
-			expDate: time.Unix(10*60*60-25, 0).UTC(),
+			msg:     "  memo    some message ",
+			expDate: time.Unix(0, 0).UTC(),
 			expDesc: "some message",
-			expTags: []string{},
+			expTags: []string{"memo"},
 		},
 		// override default offset
 		{
-			msg:     " 0 some message",
-			expDate: time.Unix(10*60*60, 0).UTC(),
+			msg:     "memo 0 some message",
+			expDate: time.Unix(0, 0).UTC(),
 			expDesc: "some message",
-			expTags: []string{},
+			expTags: []string{"memo"},
 		},
 		// custom offset
 		{
-			msg:     " 1 some message",
-			expDate: time.Unix(10*60*60-1, 0).UTC(),
+			msg:     "memo 1 some message",
+			expDate: time.Unix(0, 0).UTC(),
 			expDesc: "some message",
-			expTags: []string{},
+			expTags: []string{"memo"},
 		},
 		// more interesting timespec
 		{
-			msg:     " 5min3s some message",
-			expDate: time.Unix(10*60*60-5*60-3, 0).UTC(),
+			msg:     "memo 5min3s some message",
+			expDate: time.Unix((5*60)+3, 0).UTC(),
 			expDesc: "some message",
-			expTags: []string{},
+			expTags: []string{"memo"},
 		},
 		// same, but combined with extra tag
 		{
-			msg:     " 5min3s some message some:tag",
-			expDate: time.Unix(10*60*60-5*60-3, 0).UTC(),
+			msg:     "memo 5min3s some message some:tag",
+			expDate: time.Unix((5*60)+3, 0).UTC(),
 			expDesc: "some message",
-			expTags: []string{"some:tag"},
+			expTags: []string{"memo", "some:tag"},
 		},
 		// full date-time spec and extra tag
 		{
-			msg:     " 1970-01-01T12:34:56Z some message some:tag xyz:tag",
+			msg:     "memo 1970-01-01T12:34:56Z some message some:tag xyz:tag",
 			expDate: time.Unix(12*3600+34*60+56, 0).UTC(),
 			expDesc: "some message",
-			expTags: []string{"some:tag", "xyz:tag"},
+			expTags: []string{"memo", "some:tag", "xyz:tag"},
 		},
 	}
 
 	parser := New()
 
 	for i, c := range cases {
-		memo, err := parser.Parse(c.msg)
+		m, err := parser.Parse(c.msg)
 		if !errors.Is(err, c.expErr) {
 			t.Errorf("case %d: bad err output\ninput: %#v\nexp %v\ngot %v", i, c.msg, c.expErr, err)
 		}
@@ -98,10 +97,15 @@ func TestParse(t *testing.T) {
 			continue
 		}
 
-		if memo.Date != c.expDate || memo.Desc != c.expDesc || !reflect.DeepEqual(c.expTags, memo.Tags) {
-			fmt.Println(memo.Date != c.expDate)
-			fmt.Println(memo.Desc != c.expDesc, !reflect.DeepEqual(c.expTags, memo.Tags))
-			t.Errorf("case %d: bad output\ninput: %#v\nexp date=%s, desc=%q, tags=%v\ngot date=%s, desc=%q, tags=%v\n", i, c.msg, c.expDate, c.expDesc, c.expTags, memo.Date, memo.Desc, memo.Tags)
+		if m == nil {
+			t.Errorf("we are expecting a memo, but received none")
+			continue
+		}
+
+		m.Date = m.Date.Round(time.Second)
+
+		if m.Date != c.expDate || m.Desc != c.expDesc || !reflect.DeepEqual(c.expTags, m.Tags) {
+			t.Errorf("case %d: bad output\ninput: %#v\nexp date=%s, desc=%q, tags=%v\ngot date=%s, desc=%q, tags=%v\n", i, c.msg, c.expDate, c.expDesc, c.expTags, m.Date, m.Desc, m.Tags)
 		}
 	}
 }

@@ -7,7 +7,15 @@ type CsvStringVar []string
 
 // String
 func (c *CsvStringVar) String() string {
-	return strings.Join(*c, ",")
+	ct := *c
+
+	// trim the extra spaces
+	temp := []string{}
+	for _, cv := range ct {
+		temp = append(temp, strings.TrimSpace(cv))
+	}
+
+	return strings.Join(temp, ",")
 }
 
 // Set

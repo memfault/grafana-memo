@@ -23,11 +23,12 @@ func (p *Parser) Parse(message string) (*memo.Memo, error) {
 	message = strings.TrimSpace(message)
 
 	if len(message) == 0 {
-		return nil, errors.New("message is empty")
+		return nil, memo.ErrEmpty
 	}
 
-	memo := memo.Memo{}
+	m := memo.Memo{}
 
+	// does not detect "isForUs" validly
 	ok, err := p.isForUs(message)
 
 	// regex match fail
@@ -42,27 +43,29 @@ func (p *Parser) Parse(message string) (*memo.Memo, error) {
 
 	words := strings.Fields(message)
 	if len(words) == 0 {
-		return nil, errors.New("message is empty")
+		return nil, memo.ErrEmpty
 	}
 
-	words, ts := p.extractTimestamp(words)
-	memo.Date = ts
-	memo.Desc = strings.Join(words, " ")
+	// [1:] strips out the "memo" trigger
+	words, ts := p.extractTimestamp(words[1:])
+
+	m.Date = ts
+	m.Desc = strings.Join(words, " ")
 
 	pos := len(words) - 1 // pos of the last word that is not a tag
 	for strings.Contains(words[pos], ":") {
 		pos--
 		if pos < 0 {
-			return &memo, nil
+			return &m, nil
 		}
 	}
 
 	extraTags := words[pos+1:]
-	memo.BuildTags(extraTags)
+	m.BuildTags(extraTags)
 
-	memo.Desc = strings.Join(words[:pos+1], " ")
+	m.Desc = strings.Join(words[:pos+1], " ")
 
-	return &memo, nil
+	return &m, nil
 }
 
 // isForUs returns if this message has been identified as a memo
@@ -99,6 +102,8 @@ func (p *Parser) extractTimestamp(words []string) ([]string, time.Time) {
 			words = words[1:]
 		}
 	}
+
+	ts = ts.UTC()
 
 	return words, ts
 }

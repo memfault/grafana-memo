@@ -89,6 +89,8 @@ func (p *Parser) isForUs(message string) (bool, error) {
 	return true, nil
 }
 
+// SetClock allows injection of a benbjohnson/clock clock.Clock
+// interface, for mocking within tests.
 func (p *Parser) SetClock(clock clock.Clock) {
 	p.clock = clock
 }

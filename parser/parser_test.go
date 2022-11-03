@@ -37,42 +37,42 @@ func TestParse(t *testing.T) {
 		// standard case
 		{
 			msg:     "memo message",
-			expDate: time.Unix(0, 0).UTC(),
+			expDate: time.Unix(10*60*60-25, 0),
 			expDesc: "message",
 			expTags: []string{"memo"},
 		},
 		// standard with extraneous whitespace
 		{
 			msg:     "  memo    some message ",
-			expDate: time.Unix(0, 0).UTC(),
+			expDate: time.Unix(10*60*60-25, 0),
 			expDesc: "some message",
 			expTags: []string{"memo"},
 		},
 		// override default offset
 		{
 			msg:     "memo 0 some message",
-			expDate: time.Unix(0, 0).UTC(),
+			expDate: time.Unix(10*60*60, 0),
 			expDesc: "some message",
 			expTags: []string{"memo"},
 		},
 		// custom offset
 		{
 			msg:     "memo 1 some message",
-			expDate: time.Unix(0, 0).UTC(),
+			expDate: time.Unix(10*60*60-1, 0),
 			expDesc: "some message",
 			expTags: []string{"memo"},
 		},
 		// more interesting timespec
 		{
 			msg:     "memo 5min3s some message",
-			expDate: time.Unix((5*60)+3, 0).UTC(),
+			expDate: time.Unix(10*60*60-5*60-3, 0),
 			expDesc: "some message",
 			expTags: []string{"memo"},
 		},
 		// same, but combined with extra tag
 		{
 			msg:     "memo 5min3s some message some:tag",
-			expDate: time.Unix((5*60)+3, 0).UTC(),
+			expDate: time.Unix(10*60*60-5*60-3, 0),
 			expDesc: "some message",
 			expTags: []string{"memo", "some:tag"},
 		},
@@ -86,6 +86,7 @@ func TestParse(t *testing.T) {
 	}
 
 	parser := New()
+	parser.SetClock(mock)
 
 	for i, c := range cases {
 		m, err := parser.Parse(c.msg)

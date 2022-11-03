@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/memo"
 	"github.com/raintank/dur"
 
@@ -16,6 +17,9 @@ import (
 type Parser struct {
 	// re
 	re *regexp.Regexp
+
+	// for mocking times in tests
+	clock clock.Clock
 }
 
 // Parse takes a message and returns a memo with the fields extracted
@@ -85,15 +89,20 @@ func (p *Parser) isForUs(message string) (bool, error) {
 	return true, nil
 }
 
+func (p *Parser) SetClock(clock clock.Clock) {
+	p.clock = clock
+}
+
 // extractTimestamp takes a timestamp at the start of the memo
-// written in RFC3339 format or time strings compatible with
-// [https://pkg.go.dev/github.com/raintank/dur#ParseDuration]
+// (after memo phrase itself) written in RFC3339 format or time
+// strings compatible with [https://pkg.go.dev/github.com/raintank/dur#ParseDuration]
+// We make use of benbjohnson/clock to enable mocking of time for tests
 func (p *Parser) extractTimestamp(words []string) ([]string, time.Time) {
 	// parse time offset out of message (if applicable) and set timestamp
-	ts := time.Now().Add(-25 * time.Second)
+	ts := p.clock.Now().Add(-25 * time.Second)
 	dur, err := dur.ParseDuration(words[0])
 	if err == nil {
-		ts = time.Now().Add(-time.Duration(dur) * time.Second)
+		ts = p.clock.Now().Add(-time.Duration(dur) * time.Second)
 		words = words[1:]
 	} else {
 		parsed, err := time.Parse(time.RFC3339, words[0])
@@ -103,14 +112,13 @@ func (p *Parser) extractTimestamp(words []string) ([]string, time.Time) {
 		}
 	}
 
-	ts = ts.UTC()
-
 	return words, ts
 }
 
 // New returns a new instance of Parser
 func New() Parser {
 	return Parser{
-		re: regexp.MustCompile("^memo (.*)"),
+		re:    regexp.MustCompile("^memo (.*)"),
+		clock: clock.New(),
 	}
 }

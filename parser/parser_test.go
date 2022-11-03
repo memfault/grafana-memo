@@ -20,6 +20,7 @@ func TestParse(t *testing.T) {
 		expDate time.Time
 		expDesc string
 		expTags []string
+		expNil  bool
 	}{
 		// test empty cases
 		{
@@ -33,6 +34,11 @@ func TestParse(t *testing.T) {
 		{
 			msg:    "	",
 			expErr: memo.ErrEmpty,
+		},
+		// test not for us cases
+		{
+			msg:    "this is just a message in chat",
+			expNil: true,
 		},
 		// standard case
 		{
@@ -99,7 +105,10 @@ func TestParse(t *testing.T) {
 		}
 
 		if m == nil {
-			t.Errorf("we are expecting a memo, but received none")
+			if !c.expNil {
+				t.Errorf("we are expecting a memo, but received none")
+			}
+
 			continue
 		}
 

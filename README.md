@@ -128,8 +128,13 @@ Put a config file like below in `/etc/memo.toml`.
 log_level = "info"
 
 [slack]
+enabled = true
 bot_token = "<slack bot token>"
 app_token = "<slack app token>"
+
+[discord]
+enabled = true
+bot_token = "<discord bot token>"
 
 [grafana]
 api_key = "<grafana api key, editor role>"
@@ -155,8 +160,8 @@ A docker image is compiled for convenience:
 
 ```
 # memod
-docker run -v "${PWD}/config.toml:/etc/memo.toml" ghcr.io/grafana/memo:latest
+docker run -v "${PWD}/config.toml:/etc/memo.toml" ghcr.io/grafana/memo:master
 
 # memo-cli
-docker run -v "${PWD}/config.toml:/etc/memo.toml" ghcr.io/grafana/memo:latest memo-cli -config /etc/memo.toml -msg "test"
+docker run -v "${PWD}/config.toml:/etc/memo.toml" ghcr.io/grafana/memo:master memo-cli -config /etc/memo.toml -msg "test"
 ```

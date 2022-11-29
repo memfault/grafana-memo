@@ -14,17 +14,28 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Grafana
 type Grafana struct {
-	apiKey  string
-	apiUrl  string // e.g. http://localhost/api/
-	tlsKey  string // e.g. /path/to/key.pem
+	// apiKey generated in Grafana's settings, service accounts work too
+	apiKey string
+	// apiUrl is your grafana instance URI with /api appended
+	// e.g. http://localhost/api/
+	apiUrl string
+
+	// tlsKey for when you are using self signed certificates
+	tlsKey string
+	// tlsCert
 	tlsCert string
 
-	bearerHeader      string
+	// bearerHeader is an internal cache of the header with the apiKey present
+	bearerHeader string
+	// apiUrlAnnotations is an internal cache of the url for the API
 	apiUrlAnnotations string
-	apiUrlHealth      string
+	// apiUrlHealth is an internal cache of the url for the API health page
+	apiUrlHealth string
 }
 
+// NewGrafana returns a new grafana instance
 func NewGrafana(apiKey, apiUrl, tlsKey, tlsCert string) (Grafana, error) {
 	u, err := url.Parse(apiUrl)
 	if err != nil {
@@ -50,12 +61,17 @@ func NewGrafana(apiKey, apiUrl, tlsKey, tlsCert string) (Grafana, error) {
 	return g, nil
 }
 
+// GrafanaHealthResp
 type GrafanaHealthResp struct {
-	Commit   string
+	// Commit
+	Commit string
+	// Database
 	Database string
-	Version  string
+	// Version
+	Version string
 }
 
+// httpClient returns the client for communicating with Grafana
 func (g Grafana) httpClient() (*http.Client, error) {
 	client := &http.Client{}
 
@@ -74,6 +90,7 @@ func (g Grafana) httpClient() (*http.Client, error) {
 	return client, nil
 }
 
+// Check ensures the API is healthy
 func (g Grafana) Check() error {
 	client, err := g.httpClient()
 	if err != nil {
@@ -111,19 +128,29 @@ func (g Grafana) Check() error {
 	return nil
 }
 
+// GrafanaAnnotationReq
 type GrafanaAnnotationReq struct {
-	Time     int64    `json:"time"` // unix ts in ms
-	IsRegion bool     `json:"isRegion"`
-	Tags     []string `json:"tags"`
-	Text     string   `json:"text"`
+	// Time unix ts in ms
+	Time int64 `json:"time"`
+	// IsRegion
+	IsRegion bool `json:"isRegion"`
+	// Tags
+	Tags []string `json:"tags"`
+	// Text
+	Text string `json:"text"`
 }
 
+// GrafanaAnnotationResp
 type GrafanaAnnotationResp struct {
+	// Message
 	Message string `json:"message"`
-	Id      int    `json:"id"`
-	EndId   int    `json:"endId"`
+	// Id
+	Id int `json:"id"`
+	// EndId
+	EndId int `json:"endId"`
 }
 
+// Save stores the memo in the API
 func (g Grafana) Save(memo memo.Memo) error {
 	ga := GrafanaAnnotationReq{
 		Time:     memo.Date.Unix() * 1000,

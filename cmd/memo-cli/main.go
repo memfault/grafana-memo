@@ -14,13 +14,20 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
+// configFile
 var configFile string
+
+// timestamp
 var timestamp int
+
+// extraTags
 var extraTags CsvStringVar
+
+// message
 var message string
 
+// main
 func main() {
-
 	flag.IntVar(&timestamp, "ts", int(time.Now().Unix()), "unix timestamp. always defaults to 'now'")
 	flag.Var(&extraTags, "tags", "One or more comma-separated tags to submit, in addition to 'memo', 'user:<unix-username>' and 'host:<hostname>'")
 	flag.StringVar(&message, "msg", "", "message to submit")
@@ -79,25 +86,32 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to create Grafana store: %s\n", err.Error())
 		os.Exit(2)
 	}
+
+	memo := memo.Memo{
+		Date: time.Unix(int64(timestamp), 0),
+		Desc: message,
+	}
+
 	tags := []string{
 		"memo",
 		"user:" + usr.Username,
 		"host:" + hostname,
+		"source:cli",
 	}
-	tags, err = memo.BuildTags(tags, extraTags)
+
+	memo.BuildTags(tags)
+	memo.BuildTags(extraTags)
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to set tags: %s\n", err.Error())
 		os.Exit(2)
 	}
-	m := memo.Memo{
-		Date: time.Unix(int64(timestamp), 0),
-		Desc: message,
-		Tags: tags,
-	}
-	err = store.Save(m)
+
+	err = store.Save(memo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to save memo in store: %s\n", err.Error())
 		os.Exit(2)
 	}
+
 	fmt.Println("memo saved")
 }

@@ -3,31 +3,35 @@ package memo
 import (
 	"errors"
 	"sort"
-	"strings"
 	"time"
 )
 
-var ErrFixedTag = errors.New("cannot override built-in tags")
+// ErrEmpty used to return consistent error message for empty memo
+var ErrEmpty = errors.New("empty message")
 
+// HelpMessage used to return consistent help message
+var HelpMessage = "Hi. I only support memo requests. See https://github.com/grafana/memo/blob/master/README.md#message-format"
+
+// Memo
 type Memo struct {
+	// Date
 	Date time.Time
+	// Desc
 	Desc string
+	// Tags
 	Tags []string
 }
 
 // BuildTags takes the base tags (hardcoded), and extra tags (user specified)
 // it validates the user is not trying to override the built in tags,
 // merges them and sorts them
-func BuildTags(base, extra []string) ([]string, error) {
-	for _, ext := range extra {
-		if strings.HasPrefix(ext, "author:") {
-			return nil, ErrFixedTag
-		}
-		if strings.HasPrefix(ext, "chan:") {
-			return nil, ErrFixedTag
-		}
+func (m *Memo) BuildTags(extra []string) {
+	base := []string{
+		"memo",
 	}
+
 	base = append(base, extra...)
 	sort.Strings(base)
-	return base, nil
+
+	m.Tags = base
 }

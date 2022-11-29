@@ -1,8 +1,13 @@
-# one of trace debug info warn error fatal panic
+# one of; trace debug info warn error fatal panic
 log_level = "info"
 
 [slack]
+enabled = true
 app_token = ""
+bot_token = ""
+
+[discord]
+enabled = true
 bot_token = ""
 
 [grafana]

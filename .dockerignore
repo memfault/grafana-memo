@@ -1,0 +1,10 @@
+# changes to self should not clear cache
+Dockerfile
+
+# old / external artifacts are unrequired
+memod
+memo-cli
+
+# documentation is not required within the build container
+*.md
+LICENSE

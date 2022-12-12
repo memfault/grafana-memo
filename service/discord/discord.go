@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
+	mem "github.com/grafana/memo"
 	"github.com/grafana/memo/cfg"
 	"github.com/grafana/memo/parser"
 	"github.com/grafana/memo/service"
@@ -41,7 +42,10 @@ func (d *DiscordService) handleMessage(s *discordgo.Session, m *discordgo.Messag
 	log.Debugf("new discord message: %v", m.Content)
 	memo, err := d.parser.Parse(m.Content)
 	if err != nil {
-		d.client.ChannelMessageSend(m.ChannelID, fmt.Sprintf("memo failed: %s", err.Error()))
+		if err.Error() != mem.ErrEmpty.Error() {
+			d.client.ChannelMessageSend(m.ChannelID, fmt.Sprintf("memo failed: %s", err.Error()))
+		}
+
 		return
 	}
 

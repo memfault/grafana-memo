@@ -1,3 +1,11 @@
+# Memfault specific notes
+
+We forked the repo so we could add Heroku configuration.
+
+Deploy by pushing to the `master` branch in Github.
+
+# _the original README is below_
+
 # Memo
 
 inspired by https://github.com/Dieterbe/anthracite/ but now

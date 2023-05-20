@@ -1,3 +1,5 @@
 build:
   docker:
     worker: Dockerfile
+run:
+  worker: generate-config-file && memod memo.toml

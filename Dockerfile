@@ -16,5 +16,7 @@ FROM alpine:latest
 
 COPY --from=builder /opt/memo/memod /bin/memod
 COPY --from=builder /opt/memo/memo-cli /bin/memo-cli
+ADD generate-config-file.sh /bin/generate-config-file
+RUN chmod +x /bin/generate-config-file
 
 CMD [ "memod" ]

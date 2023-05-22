@@ -4,6 +4,11 @@ We forked the repo so we could add Heroku configuration.
 
 Deploy by pushing to the `master` branch in Github.
 
+# UPDATE
+
+This app doesn't really work well. I'm deleting the heroku app and archiving
+this repo.
+
 # _the original README is below_
 
 # Memo
